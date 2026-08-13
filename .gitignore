@@ -1,0 +1,18 @@
+# Build output
+target/
+*.class
+
+# Datasets and generated output
+microdados_enem_2025/
+output/
+
+# IDE / OS files
+.idea/
+.vscode/
+*.swp
+*.tmp
+.DS_Store
+
+# Virtual environments / Python cache
+__pycache__/
+*.pyc
