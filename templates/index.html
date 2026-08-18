@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parser Trajetória Studio</title>
+  <!-- Bootstrap 5.3 & Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar navbar-expand-lg border-bottom sticky-top bg-body-tertiary">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-primary" href="#">
+        <div class="brand-icon">
+          <i class="bi bi-cpu-fill"></i>
+        </div>
+        <span>Parser <span class="text-light">Studio</span></span>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 font-monospace">v2.0</span>
+      </a>
+
+      <div class="d-flex align-items-center gap-3 ms-auto">
+        <button class="btn btn-sm btn-outline-secondary" id="btnThemeToggle" title="Alternar tema">
+          <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#configApiModal">
+          <i class="bi bi-gear-fill me-1"></i> Configurar API
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="container-fluid px-4 py-4">
+    
+    <!-- Header Banner -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="hero-card p-4 rounded-4 shadow-sm border">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+              <h2 class="fw-bold mb-1"><i class="bi bi-layers-fill text-primary me-2"></i>Estúdio de Ingestão de Provas e Gabaritos</h2>
+              <p class="text-muted mb-0">Extraia, revise visualmente e envie questões de qualquer banca (FCC, IBFC, UNEB, CEBRASPE, ENEM e mais) sem precisar de código.</p>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary px-4 py-2 rounded-3 fw-semibold shadow" id="btnNovaExtracao" onclick="window.location.reload()">
+                <i class="bi bi-plus-circle me-1"></i> Nova Prova
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: Upload and Configuration Form (Shown when no questions parsed) -->
+    <div id="stepUploadSection" class="row g-4">
+      <div class="col-lg-7">
+        <div class="card h-100 border rounded-4 shadow-sm">
+          <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center gap-2">
+            <i class="bi bi-file-earmark-pdf-fill text-danger fs-5"></i>
+            <h5 class="card-title mb-0 fw-bold">1. Arquivos da Prova e Gabarito</h5>
+          </div>
+          <div class="card-body p-4">
+            
+            <!-- Prova PDF Upload Area -->
+            <div class="mb-4">
+              <label class="form-label fw-bold d-flex justify-content-between">
+                <span>PDF da Prova <span class="text-danger">*</span></span>
+                <span class="text-muted small" id="lblProvaStatus">Nenhum arquivo selecionado</span>
+              </label>
+              <div class="drop-zone rounded-4 p-4 text-center border-2 border-dashed" id="dropZoneProva">
+                <i class="bi bi-cloud-arrow-up-fill fs-1 text-primary mb-2 d-block"></i>
+                <h6 class="fw-semibold mb-1">Arraste o PDF da Prova aqui ou clique para selecionar</h6>
+                <p class="text-muted small mb-2">Suporta cadernos completos de questões em PDF</p>
+                <input type="file" id="fileProva" accept="application/pdf" class="d-none">
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="document.getElementById('fileProva').click()">
+                  <i class="bi bi-folder2-open me-1"></i> Escolher PDF da Prova
+                </button>
+                <div id="selectedProvaName" class="mt-2 text-success fw-semibold d-none"></div>
+              </div>
+            </div>
+
+            <!-- Gabarito Section Selector -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">Modo do Gabarito Oficial</label>
+              <ul class="nav nav-pills nav-fill mb-3 p-1 bg-body-secondary rounded-3" id="gabaritoTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active rounded-3" id="tab-gab-pdf-btn" data-bs-toggle="pill" data-bs-target="#tab-gab-pdf" type="button">
+                    <i class="bi bi-file-earmark-text-fill me-1"></i> PDF Separado
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link rounded-3" id="tab-gab-same-btn" data-bs-toggle="pill" data-bs-target="#tab-gab-same" type="button">
+                    <i class="bi bi-file-earmark-check-fill me-1"></i> No mesmo PDF / Embutido
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link rounded-3" id="tab-gab-text-btn" data-bs-toggle="pill" data-bs-target="#tab-gab-text" type="button">
+                    <i class="bi bi-keyboard-fill me-1"></i> Colar Gabarito (Texto)
+                  </button>
+                </li>
+              </ul>
+
+              <div class="tab-content" id="gabaritoTabsContent">
+                <!-- Tab PDF Gabarito -->
+                <div class="tab-pane fade show active" id="tab-gab-pdf" role="tabpanel">
+                  <div class="drop-zone rounded-4 p-3 text-center border-2 border-dashed" id="dropZoneGabarito">
+                    <i class="bi bi-file-earmark-check fs-2 text-success mb-1 d-block"></i>
+                    <h6 class="fw-semibold mb-1">Arraste o PDF do Gabarito aqui (opcional)</h6>
+                    <input type="file" id="fileGabarito" accept="application/pdf" class="d-none">
+                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 mt-1" onclick="document.getElementById('fileGabarito').click()">
+                      <i class="bi bi-folder2-open me-1"></i> Escolher PDF do Gabarito
+                    </button>
+                    <div id="selectedGabaritoName" class="mt-2 text-success fw-semibold d-none"></div>
+                  </div>
+                </div>
+
+                <!-- Tab Mesmo PDF -->
+                <div class="tab-pane fade" id="tab-gab-same" role="tabpanel">
+                  <div class="alert alert-info border-0 rounded-3 mb-0">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    O extrator buscará automaticamente pelo gabarito nas últimas páginas da prova ou nas anotações embutidas em cada questão (ex: <code>(Correta: C)</code> da UNEB).
+                  </div>
+                </div>
+
+                <!-- Tab Colar Texto -->
+                <div class="tab-pane fade" id="tab-gab-text" role="tabpanel">
+                  <textarea class="form-control font-monospace text-muted-focus" id="txtGabaritoDirect" rows="3" placeholder="Exemplo: 1-B, 2-D, 3-A, 4-A, 5-C, 6-E... ou cole a lista da banca"></textarea>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 (Right): Exam Metadata & Presets -->
+      <div class="col-lg-5">
+        <div class="card h-100 border rounded-4 shadow-sm">
+          <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center gap-2">
+            <i class="bi bi-sliders text-warning fs-5"></i>
+            <h5 class="card-title mb-0 fw-bold">2. Metadados & Template da Banca</h5>
+          </div>
+          <div class="card-body p-4">
+            
+            <!-- Banca Selector with Quick Preset Badges -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">Banca Examinadora <span class="text-danger">*</span></label>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <button type="button" class="btn btn-sm btn-preset active" onclick="setBanca('FCC')">FCC</button>
+                <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('IBFC')">IBFC</button>
+                <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('UNEB')">UNEB</button>
+                <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('CEBRASPE')">CEBRASPE</button>
+                <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('FGV')">FGV</button>
+                <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('ENEM')">ENEM</button>
+                <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('OUTRA')">Genérica</button>
+              </div>
+              <input type="text" class="form-control" id="inputBanca" value="FCC" placeholder="Ex: FCC, IBFC, UNEB, FGV, etc.">
+            </div>
+
+            <!-- Órgão -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">Órgão / Instituição</label>
+              <input type="text" class="form-control" id="inputOrgao" value="Polícia Militar da Bahia - PMBA" placeholder="Ex: PMBA, PCBA, TJBA, INSS, MEC">
+            </div>
+
+            <!-- Cargo -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">Cargo / Caderno</label>
+              <input type="text" class="form-control" id="inputCargo" value="Soldado da PM (PMM) - Tipo 001" placeholder="Ex: Aluno Soldado, Investigador, Oficial, Caderno 1">
+            </div>
+
+            <!-- Ano & Fonte -->
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-bold">Ano</label>
+                <input type="number" class="form-control" id="inputAno" value="2025" min="1990" max="2035">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-bold">Dificuldade Padrão</label>
+                <select class="form-select" id="selectDificuldade">
+                  <option value="FACIL" selected>Fácil</option>
+                  <option value="MODERADO">Moderado / Médio</option>
+                  <option value="DIFICIL">Difícil</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Execute Parse Button -->
+            <div class="mt-4 pt-2">
+              <button class="btn btn-primary btn-lg w-100 py-3 rounded-3 fw-bold shadow-lg d-flex align-items-center justify-content-center gap-2" id="btnIniciarProcessamento" onclick="processarProva()">
+                <i class="bi bi-lightning-charge-fill"></i> Extrair e Processar Questões
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner & Progress -->
+    <div id="loadingSection" class="row my-5 d-none">
+      <div class="col-md-6 mx-auto text-center">
+        <div class="spinner-grow text-primary mb-3" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
+        <h4 class="fw-bold">Processando o Caderno e Cruzando Gabaritos...</h4>
+        <p class="text-muted" id="loadingStatusText">Extraindo páginas em alta fidelidade e estruturando alternativas.</p>
+      </div>
+    </div>
+
+    <!-- Step 2: Interactive Reviewer & Visual Editor (Shown after parsing) -->
+    <div id="stepReviewSection" class="row g-4 d-none">
+      
+      <!-- Top Action Bar for Review -->
+      <div class="col-12">
+        <div class="card border rounded-4 shadow-sm bg-body-tertiary">
+          <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6 rounded-pill">
+                <i class="bi bi-check-circle-fill me-1"></i> <span id="statTotalQuestoes">0</span> Questões Extraídas
+              </span>
+              <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2 fs-6 rounded-pill">
+                <i class="bi bi-key-fill me-1"></i> <span id="statGabaritosEncontrados">0</span> Gabaritos Vinculados
+              </span>
+            </div>
+
+            <!-- Search & Batch Tools -->
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <div class="input-group input-group-sm" style="width: 220px;">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="searchQuestoes" placeholder="Buscar no enunciado..." oninput="filtrarQuestoes()">
+              </div>
+              <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#batchModal">
+                <i class="bi bi-magic me-1"></i> Ações em Lote
+              </button>
+              <button class="btn btn-sm btn-outline-success" onclick="exportarJson()">
+                <i class="bi bi-download me-1"></i> Baixar JSON
+              </button>
+              <button class="btn btn-sm btn-success fw-bold px-3 shadow" onclick="abrirModalEnvio()">
+                <i class="bi bi-send-fill me-1"></i> Enviar para o Backend
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Left: Question Navigator List -->
+      <div class="col-lg-4 col-xl-3">
+        <div class="card border rounded-4 shadow-sm h-100">
+          <div class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0"><i class="bi bi-list-ol me-1"></i> Lista de Questões</h6>
+            <button class="btn btn-xs btn-outline-primary rounded-pill" onclick="adicionarNovaQuestao()">
+              <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+          </div>
+          <div class="card-body p-2 question-list-container" id="questionNavList" style="max-height: 700px; overflow-y: auto;">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Detailed Visual WYSIWYG Question Editor -->
+      <div class="col-lg-8 col-xl-9">
+        <div class="card border rounded-4 shadow-sm" id="cardEditorDetalhe">
+          <div class="card-header bg-transparent py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill font-monospace" id="lblSelectedNumero">Q01</span>
+              <span class="text-muted fw-semibold font-monospace small" id="lblSelectedIdOrigem">PMBA_2025_Q01</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-danger" onclick="excluirQuestaoAtual()">
+                <i class="bi bi-trash-fill me-1"></i> Excluir Questão
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            
+            <!-- Metadata Row (Disciplina, Dificuldade) -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Matéria / Disciplina</label>
+                <input type="text" class="form-control form-control-sm" id="editMateria" onchange="salvarEdicaoAtual()">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold small">Dificuldade</label>
+                <select class="form-select form-select-sm" id="editDificuldade" onchange="salvarEdicaoAtual()">
+                  <option value="FACIL">Fácil</option>
+                  <option value="MODERADO">Moderado</option>
+                  <option value="DIFICIL">Difícil</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold small">Gabarito Oficial</label>
+                <input type="text" class="form-control form-control-sm text-uppercase fw-bold text-center" id="editGabaritoLetra" maxlength="1" onchange="atualizarGabaritoManual(this.value)">
+              </div>
+            </div>
+
+            <!-- Enunciado Textarea -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold small d-flex justify-content-between">
+                <span>Texto da Questão (Enunciado / Contexto)</span>
+                <span class="text-muted small">Edição visual em tempo real</span>
+              </label>
+              <textarea class="form-control font-monospace" id="editEnunciado" rows="6" oninput="salvarEdicaoAtual()"></textarea>
+            </div>
+
+            <!-- Alternativas Interactive List -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold small d-flex justify-content-between align-items-center">
+                <span>Alternativas de Resposta</span>
+                <span class="badge bg-secondary-subtle text-secondary">Clique na letra para definir como Correta</span>
+              </label>
+              
+              <div id="containerAlternativas" class="d-flex flex-column gap-2">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+          </div>
+          <div class="card-footer bg-transparent py-3 border-top d-flex justify-content-between">
+            <button class="btn btn-outline-secondary btn-sm" onclick="navegarQuestao(-1)">
+              <i class="bi bi-chevron-left me-1"></i> Anterior
+            </button>
+            <button class="btn btn-outline-primary btn-sm" onclick="navegarQuestao(1)">
+              Próxima <i class="bi bi-chevron-right ms-1"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal Configuração API -->
+  <div class="modal fade" id="configApiModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content rounded-4 border">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold"><i class="bi bi-gear-fill me-2 text-info"></i>Configurações do Backend Trajetória</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold">URL do Endpoint de Ingestão</label>
+            <input type="text" class="form-control" id="cfgApiUrl" value="http://localhost:8080/api/admin/ingestao/questoes">
+            <div class="form-text">Endpoint Spring Boot que recebe o payload JSON.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Token de Autenticação (JWT / Admin)</label>
+            <textarea class="form-control font-monospace" id="cfgApiToken" rows="4" placeholder="Cole o token JWT (opcional se desativado na máquina de testes)"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-primary px-4 rounded-3" data-bs-dismiss="modal">Salvar Configuração</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ações em Lote -->
+  <div class="modal fade" id="batchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content rounded-4 border">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold"><i class="bi bi-magic me-2 text-warning"></i>Ações em Lote</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Da Questão Nº</label>
+              <input type="number" class="form-control" id="batchStartQ" value="1" min="1">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Até a Questão Nº</label>
+              <input type="number" class="form-control" id="batchEndQ" value="20" min="1">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Definir Matéria / Disciplina</label>
+            <input type="text" class="form-control" id="batchMateriaNome" placeholder="Ex: Língua Portuguesa">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Definir Dificuldade</label>
+            <select class="form-select" id="batchDificuldade">
+              <option value="">Manter atual</option>
+              <option value="FACIL">Fácil</option>
+              <option value="MODERADO">Moderado</option>
+              <option value="DIFICIL">Difícil</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-warning fw-bold px-4" onclick="aplicarAcoesEmLote()">Aplicar no Intervalo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Envio Backend -->
+  <div class="modal fade" id="sendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content rounded-4 border">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold"><i class="bi bi-send-check-fill me-2 text-success"></i>Disparo para a API Trajetória</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="mb-3">Você está prestes a enviar <strong id="sendModalTotalCount">0</strong> questões estruturadas para o banco de dados.</p>
+          <div id="sendProgressArea" class="d-none mb-3">
+            <div class="progress mb-2" style="height: 20px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" id="sendProgressBar" style="width: 0%">0%</div>
+            </div>
+            <div class="small text-muted" id="sendProgressStatus">Enviando questões...</div>
+          </div>
+          <div id="sendResultLogs" class="p-3 bg-dark rounded-3 font-monospace small text-light d-none" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          <button type="button" class="btn btn-success fw-bold px-4" id="btnConfirmarEnvio" onclick="executarEnvioBackend()">
+            <i class="bi bi-cloud-arrow-up-fill me-1"></i> Iniciar Envio Agora
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/js/studio.js"></script>
+</body>
+</html>
