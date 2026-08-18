@@ -133,7 +133,6 @@ async function processarProva() {
   formData.append('orgao', document.getElementById('inputOrgao').value || '');
   formData.append('cargo', document.getElementById('inputCargo').value || '');
   formData.append('ano', document.getElementById('inputAno').value || '2025');
-  formData.append('dificuldade', document.getElementById('selectDificuldade').value || 'FACIL');
 
   // Exibe Loading
   document.getElementById('stepUploadSection').classList.add('d-none');
@@ -165,10 +164,7 @@ async function processarProva() {
     document.getElementById('statTotalQuestoes').textContent = questoesData.length;
     const gabCount = questoesData.filter(q => q.gabaritoOficial).length;
     document.getElementById('statGabaritosEncontrados').textContent = gabCount;
-    
-    // Atualiza modais
     document.getElementById('batchEndQ').value = questoesData.length;
-    document.getElementById('sendModalTotalCount').textContent = questoesData.length;
 
     // Mostra tela de revisão
     document.getElementById('stepReviewSection').classList.remove('d-none');
@@ -229,7 +225,6 @@ function renderQuestionDetail(idx) {
   document.getElementById('lblSelectedNumero').textContent = `Q${String(q.posicao).padStart(2, '0')}`;
   document.getElementById('lblSelectedIdOrigem').textContent = q.idOrigem || `ID_Q${q.posicao}`;
   document.getElementById('editMateria').value = q.materiaNome || '';
-  document.getElementById('editDificuldade').value = q.dificuldade || 'FACIL';
   document.getElementById('editGabaritoLetra').value = q.gabaritoOficial || '';
   document.getElementById('editEnunciado').value = q.enunciado || '';
 
@@ -257,7 +252,6 @@ function salvarEdicaoAtual() {
   if (!questoesData[currentIndex]) return;
   const q = questoesData[currentIndex];
   q.materiaNome = document.getElementById('editMateria').value;
-  q.dificuldade = document.getElementById('editDificuldade').value;
   q.enunciado = document.getElementById('editEnunciado').value;
 }
 
@@ -302,7 +296,6 @@ function adicionarNovaQuestao() {
     posicao: nextPos,
     idOrigem: `${currentBanca}_MANUAL_Q${String(nextPos).padStart(2, '0')}`,
     materiaNome: 'Geral',
-    dificuldade: 'FACIL',
     enunciado: 'Novo enunciado...',
     gabaritoOficial: 'A',
     anulada: false,
@@ -332,17 +325,15 @@ function filtrarQuestoes() {
   });
 }
 
-// Ações em Lote
+// Ações em Lote (Matérias)
 function aplicarAcoesEmLote() {
   const start = parseInt(document.getElementById('batchStartQ').value) || 1;
   const end = parseInt(document.getElementById('batchEndQ').value) || questoesData.length;
   const materia = document.getElementById('batchMateriaNome').value.trim();
-  const dif = document.getElementById('batchDificuldade').value;
 
   questoesData.forEach(q => {
     if (q.posicao >= start && q.posicao <= end) {
       if (materia) q.materiaNome = materia;
-      if (dif) q.dificuldade = dif;
     }
   });
 
@@ -376,72 +367,5 @@ async function exportarJson() {
     a.remove();
   } catch (err) {
     alert(`Erro ao exportar JSON: ${err.message}`);
-  }
-}
-
-// Envio para o Backend Trajetória
-function abrirModalEnvio() {
-  salvarEdicaoAtual();
-  document.getElementById('sendModalTotalCount').textContent = questoesData.length;
-  document.getElementById('sendProgressArea').classList.add('d-none');
-  document.getElementById('sendResultLogs').classList.add('d-none');
-  document.getElementById('sendResultLogs').innerHTML = '';
-  document.getElementById('btnConfirmarEnvio').disabled = false;
-
-  const modal = new bootstrap.Modal(document.getElementById('sendModal'));
-  modal.show();
-}
-
-async function executarEnvioBackend() {
-  const apiUrl = document.getElementById('cfgApiUrl').value || 'http://localhost:8080/api/admin/ingestao/questoes';
-  const token = document.getElementById('cfgApiToken').value || '';
-
-  const progressBar = document.getElementById('sendProgressBar');
-  const progressStatus = document.getElementById('sendProgressStatus');
-  const progressArea = document.getElementById('sendProgressArea');
-  const logArea = document.getElementById('sendResultLogs');
-  const btn = document.getElementById('btnConfirmarEnvio');
-
-  btn.disabled = true;
-  progressArea.classList.remove('d-none');
-  logArea.classList.remove('d-none');
-  progressBar.style.width = '30%';
-  progressBar.textContent = '30%';
-  progressStatus.textContent = 'Disparando requisições para a API...';
-
-  try {
-    const response = await fetch('/api/send-backend', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        questoes: questoesData,
-        apiUrl: apiUrl,
-        token: token
-      })
-    });
-
-    const data = await response.json();
-    progressBar.style.width = '100%';
-    progressBar.textContent = '100%';
-
-    if (data.success) {
-      progressBar.className = 'progress-bar bg-success';
-      progressStatus.textContent = `✓ Sucesso! ${data.enviadas || questoesData.length} questões enviadas com sucesso!`;
-      logArea.innerHTML = `<div class="text-success fw-bold">✓ Envio concluído com sucesso!</div>`;
-      if (data.detalhes) {
-        data.detalhes.forEach(d => {
-          logArea.innerHTML += `<div>[${d.status}] ${d.idOrigem}</div>`;
-        });
-      }
-    } else {
-      progressBar.className = 'progress-bar bg-danger';
-      progressStatus.textContent = `Falha no envio: ${data.error || 'Verifique se a API está online'}`;
-      logArea.innerHTML = `<div class="text-danger fw-bold">✕ Erro no envio: ${data.error || 'Verifique se a API em ' + apiUrl + ' está rodando.'}</div>`;
-    }
-  } catch (err) {
-    progressBar.className = 'progress-bar bg-danger';
-    progressBar.style.width = '100%';
-    progressStatus.textContent = `Erro de conexão com o servidor: ${err.message}`;
-    logArea.innerHTML = `<div class="text-danger fw-bold">✕ Erro de conexão: ${err.message}</div>`;
   }
 }

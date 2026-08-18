@@ -22,15 +22,12 @@
           <i class="bi bi-cpu-fill"></i>
         </div>
         <span>Parser <span class="text-light">Studio</span></span>
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 font-monospace">v2.0</span>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 font-monospace">Desktop v2.0</span>
       </a>
 
       <div class="d-flex align-items-center gap-3 ms-auto">
         <button class="btn btn-sm btn-outline-secondary" id="btnThemeToggle" title="Alternar tema">
           <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
-        </button>
-        <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#configApiModal">
-          <i class="bi bi-gear-fill me-1"></i> Configurar API
         </button>
       </div>
     </div>
@@ -45,8 +42,8 @@
         <div class="hero-card p-4 rounded-4 shadow-sm border">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-              <h2 class="fw-bold mb-1"><i class="bi bi-layers-fill text-primary me-2"></i>Estúdio de Ingestão de Provas e Gabaritos</h2>
-              <p class="text-muted mb-0">Extraia, revise visualmente e envie questões de qualquer banca (FCC, IBFC, UNEB, CEBRASPE, ENEM e mais) sem precisar de código.</p>
+              <h2 class="fw-bold mb-1"><i class="bi bi-layers-fill text-primary me-2"></i>Estúdio de Extração e Estruturação de Provas</h2>
+              <p class="text-muted mb-0">Extraia questões de PDFs, vincule os gabaritos oficiais, revise visualmente e exporte o arquivo JSON pronto.</p>
             </div>
             <div class="d-flex gap-2">
               <button class="btn btn-primary px-4 py-2 rounded-3 fw-semibold shadow" id="btnNovaExtracao" onclick="window.location.reload()">
@@ -145,7 +142,7 @@
         <div class="card h-100 border rounded-4 shadow-sm">
           <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center gap-2">
             <i class="bi bi-sliders text-warning fs-5"></i>
-            <h5 class="card-title mb-0 fw-bold">2. Metadados & Template da Banca</h5>
+            <h5 class="card-title mb-0 fw-bold">2. Identificação da Prova & Banca</h5>
           </div>
           <div class="card-body p-4">
             
@@ -177,19 +174,9 @@
             </div>
 
             <!-- Ano & Fonte -->
-            <div class="row g-3 mb-3">
-              <div class="col-6">
-                <label class="form-label fw-bold">Ano</label>
-                <input type="number" class="form-control" id="inputAno" value="2025" min="1990" max="2035">
-              </div>
-              <div class="col-6">
-                <label class="form-label fw-bold">Dificuldade Padrão</label>
-                <select class="form-select" id="selectDificuldade">
-                  <option value="FACIL" selected>Fácil</option>
-                  <option value="MODERADO">Moderado / Médio</option>
-                  <option value="DIFICIL">Difícil</option>
-                </select>
-              </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Ano</label>
+              <input type="number" class="form-control" id="inputAno" value="2025" min="1990" max="2035">
             </div>
 
             <!-- Execute Parse Button -->
@@ -236,13 +223,10 @@
                 <input type="text" class="form-control" id="searchQuestoes" placeholder="Buscar no enunciado..." oninput="filtrarQuestoes()">
               </div>
               <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#batchModal">
-                <i class="bi bi-magic me-1"></i> Ações em Lote
+                <i class="bi bi-magic me-1"></i> Definir Matérias em Lote
               </button>
-              <button class="btn btn-sm btn-outline-success" onclick="exportarJson()">
-                <i class="bi bi-download me-1"></i> Baixar JSON
-              </button>
-              <button class="btn btn-sm btn-success fw-bold px-3 shadow" onclick="abrirModalEnvio()">
-                <i class="bi bi-send-fill me-1"></i> Enviar para o Backend
+              <button class="btn btn-sm btn-success fw-bold px-4 shadow py-2" onclick="exportarJson()">
+                <i class="bi bi-download me-1"></i> Baixar Arquivo JSON
               </button>
             </div>
           </div>
@@ -280,21 +264,13 @@
           </div>
           <div class="card-body p-4">
             
-            <!-- Metadata Row (Disciplina, Dificuldade) -->
+            <!-- Metadata Row (Disciplina, Gabarito) -->
             <div class="row g-3 mb-3">
-              <div class="col-md-6">
+              <div class="col-md-8">
                 <label class="form-label fw-semibold small">Matéria / Disciplina</label>
                 <input type="text" class="form-control form-control-sm" id="editMateria" onchange="salvarEdicaoAtual()">
               </div>
-              <div class="col-md-3">
-                <label class="form-label fw-semibold small">Dificuldade</label>
-                <select class="form-select form-select-sm" id="editDificuldade" onchange="salvarEdicaoAtual()">
-                  <option value="FACIL">Fácil</option>
-                  <option value="MODERADO">Moderado</option>
-                  <option value="DIFICIL">Difícil</option>
-                </select>
-              </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <label class="form-label fw-semibold small">Gabarito Oficial</label>
                 <input type="text" class="form-control form-control-sm text-uppercase fw-bold text-center" id="editGabaritoLetra" maxlength="1" onchange="atualizarGabaritoManual(this.value)">
               </div>
@@ -306,14 +282,14 @@
                 <span>Texto da Questão (Enunciado / Contexto)</span>
                 <span class="text-muted small">Edição visual em tempo real</span>
               </label>
-              <textarea class="form-control font-monospace" id="editEnunciado" rows="6" oninput="salvarEdicaoAtual()"></textarea>
+              <textarea class="form-control font-monospace" id="editEnunciado" rows="7" oninput="salvarEdicaoAtual()"></textarea>
             </div>
 
             <!-- Alternativas Interactive List -->
             <div class="mb-3">
               <label class="form-label fw-semibold small d-flex justify-content-between align-items-center">
                 <span>Alternativas de Resposta</span>
-                <span class="badge bg-secondary-subtle text-secondary">Clique na letra para definir como Correta</span>
+                <span class="badge bg-secondary-subtle text-secondary">Clique na letra da alternativa para definir como Correta</span>
               </label>
               
               <div id="containerAlternativas" class="d-flex flex-column gap-2">
@@ -337,38 +313,12 @@
 
   </div>
 
-  <!-- Modal Configuração API -->
-  <div class="modal fade" id="configApiModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content rounded-4 border">
-        <div class="modal-header border-bottom">
-          <h5 class="modal-title fw-bold"><i class="bi bi-gear-fill me-2 text-info"></i>Configurações do Backend Trajetória</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-4">
-          <div class="mb-3">
-            <label class="form-label fw-bold">URL do Endpoint de Ingestão</label>
-            <input type="text" class="form-control" id="cfgApiUrl" value="http://localhost:8080/api/admin/ingestao/questoes">
-            <div class="form-text">Endpoint Spring Boot que recebe o payload JSON.</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-bold">Token de Autenticação (JWT / Admin)</label>
-            <textarea class="form-control font-monospace" id="cfgApiToken" rows="4" placeholder="Cole o token JWT (opcional se desativado na máquina de testes)"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer border-top">
-          <button type="button" class="btn btn-primary px-4 rounded-3" data-bs-dismiss="modal">Salvar Configuração</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Ações em Lote -->
+  <!-- Modal Ações em Lote (Matérias) -->
   <div class="modal fade" id="batchModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content rounded-4 border">
         <div class="modal-header border-bottom">
-          <h5 class="modal-title fw-bold"><i class="bi bi-magic me-2 text-warning"></i>Ações em Lote</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-magic me-2 text-warning"></i>Definir Matérias em Lote</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
@@ -383,50 +333,13 @@
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Definir Matéria / Disciplina</label>
-            <input type="text" class="form-control" id="batchMateriaNome" placeholder="Ex: Língua Portuguesa">
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Definir Dificuldade</label>
-            <select class="form-select" id="batchDificuldade">
-              <option value="">Manter atual</option>
-              <option value="FACIL">Fácil</option>
-              <option value="MODERADO">Moderado</option>
-              <option value="DIFICIL">Difícil</option>
-            </select>
+            <label class="form-label fw-semibold">Nome da Matéria / Disciplina</label>
+            <input type="text" class="form-control" id="batchMateriaNome" placeholder="Ex: Língua Portuguesa, Noções de Direito, etc.">
           </div>
         </div>
         <div class="modal-footer border-top">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-warning fw-bold px-4" onclick="aplicarAcoesEmLote()">Aplicar no Intervalo</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Envio Backend -->
-  <div class="modal fade" id="sendModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content rounded-4 border">
-        <div class="modal-header border-bottom">
-          <h5 class="modal-title fw-bold"><i class="bi bi-send-check-fill me-2 text-success"></i>Disparo para a API Trajetória</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-4">
-          <p class="mb-3">Você está prestes a enviar <strong id="sendModalTotalCount">0</strong> questões estruturadas para o banco de dados.</p>
-          <div id="sendProgressArea" class="d-none mb-3">
-            <div class="progress mb-2" style="height: 20px;">
-              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" id="sendProgressBar" style="width: 0%">0%</div>
-            </div>
-            <div class="small text-muted" id="sendProgressStatus">Enviando questões...</div>
-          </div>
-          <div id="sendResultLogs" class="p-3 bg-dark rounded-3 font-monospace small text-light d-none" style="max-height: 200px; overflow-y: auto;"></div>
-        </div>
-        <div class="modal-footer border-top">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-          <button type="button" class="btn btn-success fw-bold px-4" id="btnConfirmarEnvio" onclick="executarEnvioBackend()">
-            <i class="bi bi-cloud-arrow-up-fill me-1"></i> Iniciar Envio Agora
-          </button>
+          <button type="button" class="btn btn-warning fw-bold px-4" onclick="aplicarAcoesEmLote()">Aplicar nas Questões</button>
         </div>
       </div>
     </div>

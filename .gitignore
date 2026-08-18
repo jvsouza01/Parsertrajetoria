@@ -1,6 +1,9 @@
 # Build output
 target/
 *.class
+dist/
+build/
+*.spec
 
 # Datasets and generated output
 microdados_enem_2025/

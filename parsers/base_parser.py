@@ -11,7 +11,6 @@ class BaseExamParser:
         self.cargo = self.metadata.get("cargo", "")
         self.ano = int(self.metadata.get("ano", 2025)) if str(self.metadata.get("ano", "")).isdigit() else 2025
         self.fonte = self.metadata.get("fonte", "CONCURSO")
-        self.default_dificuldade = self.metadata.get("dificuldade", "FACIL")
 
     def clean_text(self, text):
         """Limpa ruídos de extração de PDF mantendo quebras de parágrafo significativas."""
@@ -51,14 +50,6 @@ class BaseExamParser:
                 if texto_base.strip() not in enunciado:
                     enunciado = f"{texto_base.strip()}\n\n{enunciado}"
 
-            # Dificuldade padronizada
-            dif = (q.get("dificuldade") or self.default_dificuldade).upper()
-            if dif in ["MEDIO", "MÉDIO"]:
-                dif = "MODERADO"
-            elif dif not in ["FACIL", "FÁCIL", "MODERADO", "DIFICIL", "DIFÍCIL"]:
-                dif = "FACIL"
-            dif = dif.replace("Á", "A").replace("Í", "I")
-
             # Alternativas
             alts_raw = q.get("alternativas", [])
             alternativas = []
@@ -93,7 +84,6 @@ class BaseExamParser:
                 "materiaNome": q.get("materia") or q.get("disciplina") or q.get("materiaNome", "Geral"),
                 "areaConhecimento": q.get("areaConhecimento", "Geral"),
                 "assunto": q.get("assunto", ""),
-                "dificuldade": dif,
                 "enunciado": enunciado,
                 "imagemUrl": q.get("imagemUrl", None),
                 "gabaritoOficial": gab_oficial,

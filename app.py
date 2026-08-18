@@ -2,11 +2,18 @@ import os
 import sys
 import json
 import tempfile
-import requests
-from flask import Flask, render_template, request, jsonify, send_file, Response
+from flask import Flask, render_template, request, jsonify, Response
 from parsers import ExamParserFactory, GabaritoExtractor
 
-app = Flask(__name__)
+# Suporte a empacotamento PyInstaller (sys._MEIPASS)
+if getattr(sys, 'frozen', False):
+    base_dir = sys._MEIPASS
+    template_folder = os.path.join(base_dir, 'templates')
+    static_folder = os.path.join(base_dir, 'static')
+    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+else:
+    app = Flask(__name__)
+
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 MB max upload
 
 @app.route('/')
@@ -28,15 +35,13 @@ def parse_exam():
         cargo = request.form.get('cargo', '')
         ano = request.form.get('ano', '2025')
         fonte = request.form.get('fonte', 'CONCURSO')
-        dificuldade = request.form.get('dificuldade', 'FACIL')
 
         metadata = {
             'banca': banca,
             'orgao': orgao,
             'cargo': cargo,
             'ano': ano,
-            'fonte': fonte,
-            'dificuldade': dificuldade
+            'fonte': fonte
         }
 
         # Salva prova temporariamente para leitura segura
@@ -56,7 +61,10 @@ def parse_exam():
                 gabarito_map, disciplina_map = GabaritoExtractor.extract_from_pdf(gab_tmp_path)
             finally:
                 if os.path.exists(gab_tmp_path):
-                    os.remove(gab_tmp_path)
+                    try:
+                        os.remove(gab_tmp_path)
+                    except:
+                        pass
 
         # 2. Se o usuário colou texto de gabarito
         if not gabarito_map and gabarito_text:
@@ -69,7 +77,10 @@ def parse_exam():
             questoes = parser.parse_pdf(prova_tmp_path, gabarito_map, disciplina_map)
         finally:
             if os.path.exists(prova_tmp_path):
-                os.remove(prova_tmp_path)
+                try:
+                    os.remove(prova_tmp_path)
+                except:
+                    pass
 
         return jsonify({
             'success': True,
@@ -103,7 +114,10 @@ def parse_gabarito_only():
                 gabarito_map, disciplina_map = GabaritoExtractor.extract_from_pdf(gab_tmp_path)
             finally:
                 if os.path.exists(gab_tmp_path):
-                    os.remove(gab_tmp_path)
+                    try:
+                        os.remove(gab_tmp_path)
+                    except:
+                        pass
         elif gabarito_text:
             gabarito_map, disciplina_map = GabaritoExtractor.extract_from_text(gabarito_text)
 
@@ -113,66 +127,6 @@ def parse_gabarito_only():
             'gabaritos': gabarito_map,
             'disciplinas': disciplina_map
         })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/send-backend', methods=['POST'])
-def send_to_backend():
-    try:
-        data = request.json or {}
-        questoes = data.get('questoes', [])
-        api_url = data.get('apiUrl', 'http://localhost:8080/api/admin/ingestao/questoes').strip()
-        token = data.get('token', '').strip()
-
-        if not questoes:
-            return jsonify({'success': False, 'error': 'Nenhuma questão para enviar.'}), 400
-
-        headers = {'Content-Type': 'application/json'}
-        if token:
-            headers['Authorization'] = f"Bearer {token}" if not token.startswith('Bearer ') else token
-
-        # Envia cada questão ou o lote completo
-        success_count = 0
-        failed_count = 0
-        results = []
-
-        # Tenta envio em lote primeiro
-        try:
-            resp = requests.post(api_url, json=questoes, headers=headers, timeout=15)
-            if resp.status_code in [200, 201]:
-                return jsonify({
-                    'success': True,
-                    'batch': True,
-                    'message': f'Lote de {len(questoes)} questões enviado com sucesso!',
-                    'status': resp.status_code,
-                    'enviadas': len(questoes),
-                    'falhas': 0
-                })
-        except Exception as e:
-            print(f"[Batch Ingestion Failed, trying individual] {e}")
-
-        # Se o backend não aceita array direto ou falhou, envia item por item
-        for q in questoes:
-            try:
-                resp = requests.post(api_url, json=q, headers=headers, timeout=10)
-                if resp.status_code in [200, 201]:
-                    success_count += 1
-                    results.append({'idOrigem': q.get('idOrigem'), 'status': 'OK', 'code': resp.status_code})
-                else:
-                    failed_count += 1
-                    results.append({'idOrigem': q.get('idOrigem'), 'status': 'ERRO', 'code': resp.status_code, 'msg': resp.text[:200]})
-            except Exception as ex:
-                failed_count += 1
-                results.append({'idOrigem': q.get('idOrigem'), 'status': 'ERRO', 'msg': str(ex)})
-
-        return jsonify({
-            'success': success_count > 0,
-            'batch': False,
-            'enviadas': success_count,
-            'falhas': failed_count,
-            'detalhes': results
-        })
-
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -196,7 +150,7 @@ def export_json():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"\n=======================================================")
-    print(f"🚀 Parser Trajetória Studio iniciado!")
+    print(f"🚀 Parser Trajetória Studio Desktop!")
     print(f"👉 Acesse no navegador: http://localhost:{port}")
     print(f"=======================================================\n")
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='127.0.0.1', port=port, debug=False)
