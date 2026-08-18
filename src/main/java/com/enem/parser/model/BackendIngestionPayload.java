@@ -1,21 +1,48 @@
 package com.enem.parser.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class BackendIngestionPayload {
     private String idOrigem;
-    private String fonte = "ENEM";
-    private String banca = "INEP";
-    private String orgao = null;
-    private String cargo = null;
+    private String fonte = "CONCURSO"; // "CONCURSO", "ENEM", "PROPRIA"
+    private String banca = "UNEB";
+    private String orgao = "Polícia Militar da Bahia - PMBA";
+    private String cargo = "Oficial da PM (CFOPM) - Caderno 1";
     private int ano = 2025;
     private String materiaNome;
+    private String dificuldade = "MODERADO"; // "FACIL", "MODERADO", "DIFICIL"
     private String enunciado;
-    private String imagemUrl;
-    private String statusRevisao = "APROVADO_AUTO";
+    private String imagemUrl = null;
     private List<AlternativaPayload> alternativas;
 
     public BackendIngestionPayload() {}
+
+    public BackendIngestionPayload(
+            String idOrigem,
+            String fonte,
+            String banca,
+            String orgao,
+            String cargo,
+            int ano,
+            String materiaNome,
+            String dificuldade,
+            String enunciado,
+            String imagemUrl,
+            List<AlternativaPayload> alternativas) {
+        this.idOrigem = idOrigem;
+        this.fonte = fonte;
+        this.banca = banca;
+        this.orgao = orgao;
+        this.cargo = cargo;
+        this.ano = ano;
+        this.materiaNome = materiaNome;
+        this.dificuldade = dificuldade;
+        this.enunciado = enunciado;
+        this.imagemUrl = imagemUrl;
+        this.alternativas = alternativas;
+    }
 
     public String getIdOrigem() {
         return idOrigem;
@@ -73,6 +100,14 @@ public class BackendIngestionPayload {
         this.materiaNome = materiaNome;
     }
 
+    public String getDificuldade() {
+        return dificuldade;
+    }
+
+    public void setDificuldade(String dificuldade) {
+        this.dificuldade = dificuldade;
+    }
+
     public String getEnunciado() {
         return enunciado;
     }
@@ -87,14 +122,6 @@ public class BackendIngestionPayload {
 
     public void setImagemUrl(String imagemUrl) {
         this.imagemUrl = imagemUrl;
-    }
-
-    public String getStatusRevisao() {
-        return statusRevisao;
-    }
-
-    public void setStatusRevisao(String statusRevisao) {
-        this.statusRevisao = statusRevisao;
     }
 
     public List<AlternativaPayload> getAlternativas() {
