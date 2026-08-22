@@ -31,7 +31,7 @@ class BaseExamParser:
         raise NotImplementedError("Cada parser de banca deve implementar parse_pdf.")
 
     def format_to_payload(self, questoes):
-        """Converte a lista de dicionários internos para o formato oficial da API Trajetória."""
+        """Converte a lista de dicionários internos para o formato oficial IngestaoQuestaoInput da API Trajetória."""
         payload = []
         for q in questoes:
             pos = q.get("posicao") or q.get("pos", 1)
@@ -42,13 +42,10 @@ class BaseExamParser:
             cargo_clean = re.sub(r'[^A-Z0-9]', '_', self.cargo.upper())[:15] if self.cargo else "PROVA"
             id_origem = q.get("idOrigem") or f"{banca_clean}_{self.ano}_{cargo_clean}_Q{pos_str}"
             
-            # Enunciado com texto-base (se houver)
+            # Enunciado e Texto-base
             enunciado = q.get("enunciado", "").strip()
-            texto_base = q.get("textoBase") or q.get("base")
-            if texto_base and texto_base.strip():
-                # Se o enunciado já não contiver o texto base
-                if texto_base.strip() not in enunciado:
-                    enunciado = f"{texto_base.strip()}\n\n{enunciado}"
+            texto_base = q.get("textoBase") or q.get("base") or q.get("textoApoio") or ""
+            texto_base_str = str(texto_base).strip() if texto_base else None
 
             # Alternativas
             alts_raw = q.get("alternativas", [])
@@ -73,20 +70,25 @@ class BaseExamParser:
                     "correta": is_correta
                 })
 
+            materia_raw = q.get("materia") or q.get("disciplina") or q.get("materiaNome")
+            materia_final = str(materia_raw).strip() if materia_raw and str(materia_raw).strip() not in ["", "null", "None", "Geral"] else None
+
             payload.append({
-                "posicao": int(pos),
                 "idOrigem": id_origem,
+                "posicao": int(pos),
                 "fonte": self.fonte,
                 "banca": self.banca,
-                "orgao": self.orgao,
-                "cargo": self.cargo,
+                "orgao": self.orgao if self.orgao else None,
+                "cargo": self.cargo if self.cargo else None,
                 "ano": self.ano,
-                "materiaNome": q.get("materia") or q.get("disciplina") or q.get("materiaNome", "Geral"),
-                "areaConhecimento": q.get("areaConhecimento", "Geral"),
-                "assunto": q.get("assunto", ""),
+                "materiaNome": materia_final,
+                "assunto": q.get("assunto") or None,
+                "textoBase": texto_base_str,
                 "enunciado": enunciado,
                 "imagemUrl": q.get("imagemUrl", None),
-                "gabaritoOficial": gab_oficial,
+                "temImagem": bool(q.get("temImagem", False)),
+                "descricaoImagem": q.get("descricaoImagem"),
+                "gabaritoOficial": gab_oficial if not is_anulada else "*",
                 "anulada": is_anulada,
                 "alternativas": alternativas
             })

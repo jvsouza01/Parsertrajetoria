@@ -49,7 +49,7 @@ class GenericExamParser(BaseExamParser):
             return []
 
         questoes = []
-        current_materia = "Geral"
+        current_materia = None
 
         for i, (q_num, match_start, match_end) in enumerate(best_splits):
             chunk_end = best_splits[i+1][1] if i + 1 < len(best_splits) else len(full_text)
@@ -57,6 +57,20 @@ class GenericExamParser(BaseExamParser):
 
             if q_num in disciplina_map:
                 current_materia = disciplina_map[q_num]
+
+            # Anti-leakage / Detecção de língua estrangeira no bloco da questão
+            bloco_texto = f" {chunk} ".lower()
+            english_markers = [" the ", " and ", " of ", " to ", " in ", " with ", " which ", " according to ", " is "]
+            spanish_markers = [" el ", " la ", " los ", " las ", " de ", " en ", " y ", " que ", " por ", " según "]
+            
+            eng_hits = sum(1 for m in english_markers if m in bloco_texto)
+            spa_hits = sum(1 for m in spanish_markers if m in bloco_texto)
+            
+            materia_questao = current_materia
+            if eng_hits >= 3:
+                materia_questao = "Inglês"
+            elif spa_hits >= 3:
+                materia_questao = "Espanhol"
 
             # Detecta gabarito embutido
             gab_embedded = None
@@ -98,8 +112,8 @@ class GenericExamParser(BaseExamParser):
 
             questoes.append({
                 "posicao": q_num,
-                "materia": current_materia,
-                "textoBase": "",
+                "materia": materia_questao,
+                "textoBase": None,
                 "enunciado": enunciado,
                 "gabaritoOficial": final_gab,
                 "anulada": is_anulada,

@@ -25,7 +25,11 @@
         <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 font-monospace">Desktop v2.0</span>
       </a>
 
-      <div class="d-flex align-items-center gap-3 ms-auto">
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <button class="btn btn-sm btn-outline-info rounded-pill px-3 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#aiSettingsModal">
+          <i class="bi bi-stars text-warning"></i>
+          <span id="lblAiNavStatus" class="fw-semibold">Google Gemini 🟢 Ativo</span>
+        </button>
         <button class="btn btn-sm btn-outline-secondary" id="btnThemeToggle" title="Alternar tema">
           <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
         </button>
@@ -46,6 +50,11 @@
               <p class="text-muted mb-0">Extraia questões de PDFs, vincule os gabaritos oficiais, revise visualmente e exporte o arquivo JSON pronto.</p>
             </div>
             <div class="d-flex gap-2">
+              <button class="btn btn-warning px-3 py-2 rounded-3 fw-bold shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#esteiraModal" id="btnOpenEsteira" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none;">
+                <span class="spinner-grow spinner-grow-sm d-none" id="esteiraPulseBadge" role="status" style="width: 0.7rem; height: 0.7rem;"></span>
+                <i class="bi bi-robot fs-5"></i>
+                <span>Esteira Automática ⚡</span>
+              </button>
               <button class="btn btn-primary px-4 py-2 rounded-3 fw-semibold shadow" id="btnNovaExtracao" onclick="window.location.reload()">
                 <i class="bi bi-plus-circle me-1"></i> Nova Prova
               </button>
@@ -150,11 +159,14 @@
             <div class="mb-3">
               <label class="form-label fw-bold">Banca Examinadora <span class="text-danger">*</span></label>
               <div class="d-flex flex-wrap gap-2 mb-2">
+                <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('CONSULTEC')">CONSULTEC</button>
+                <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('AIETEC')">AIETEC</button>
                 <button type="button" class="btn btn-sm btn-preset active" onclick="setBanca('FCC')">FCC</button>
                 <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('IBFC')">IBFC</button>
                 <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('UNEB')">UNEB</button>
                 <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('CEBRASPE')">CEBRASPE</button>
                 <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('FGV')">FGV</button>
+                <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('VUNESP')">VUNESP</button>
                 <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('ENEM')">ENEM</button>
                 <button type="button" class="btn btn-sm btn-preset" onclick="setBanca('OUTRA')">Genérica</button>
               </div>
@@ -179,10 +191,38 @@
               <input type="number" class="form-control" id="inputAno" value="2025" min="1990" max="2035">
             </div>
 
+            <!-- Modo de Processamento -->
+            <div class="mb-4">
+              <label class="form-label fw-bold d-flex justify-content-between align-items-center">
+                <span>Modo de Extração</span>
+                <span class="badge bg-primary-subtle text-primary"><i class="bi bi-stars"></i> IA Gemini Ativa</span>
+              </label>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="form-check p-3 border rounded-3 bg-body-secondary h-100 cursor-pointer" onclick="document.getElementById('engineGemini').checked = true">
+                    <input class="form-check-input" type="radio" name="extractionEngine" id="engineGemini" value="gemini" checked>
+                    <label class="form-check-label fw-semibold cursor-pointer" for="engineGemini">
+                      <i class="bi bi-stars text-warning me-1"></i> Extração com IA (Gemini)
+                      <div class="text-muted small fw-normal">Extrai página a página com IA. Corrige 2 colunas, gabaritos e textos quebrados com máxima fidelidade.</div>
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check p-3 border rounded-3 bg-body-secondary h-100 cursor-pointer" onclick="document.getElementById('engineLocal').checked = true">
+                    <input class="form-check-input" type="radio" name="extractionEngine" id="engineLocal" value="local">
+                    <label class="form-check-label fw-semibold cursor-pointer" for="engineLocal">
+                      <i class="bi bi-lightning-charge-fill text-info me-1"></i> Parser Local Rápido
+                      <div class="text-muted small fw-normal">Extração determinística por Regex em 1s. Você pode auditar com a IA depois.</div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Execute Parse Button -->
             <div class="mt-4 pt-2">
               <button class="btn btn-primary btn-lg w-100 py-3 rounded-3 fw-bold shadow-lg d-flex align-items-center justify-content-center gap-2" id="btnIniciarProcessamento" onclick="processarProva()">
-                <i class="bi bi-lightning-charge-fill"></i> Extrair e Processar Questões
+                <i class="bi bi-lightning-charge-fill"></i> Extrair e Processar Prova
               </button>
             </div>
 
@@ -218,15 +258,21 @@
 
             <!-- Search & Batch Tools -->
             <div class="d-flex flex-wrap align-items-center gap-2">
-              <div class="input-group input-group-sm" style="width: 220px;">
+              <div class="input-group input-group-sm" style="width: 180px;">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control" id="searchQuestoes" placeholder="Buscar no enunciado..." oninput="filtrarQuestoes()">
+                <input type="text" class="form-control" id="searchQuestoes" placeholder="Buscar..." oninput="filtrarQuestoes()">
               </div>
+              <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#textoApoioModal">
+                <i class="bi bi-file-text me-1"></i> Texto de Apoio
+              </button>
               <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#batchModal">
-                <i class="bi bi-magic me-1"></i> Definir Matérias em Lote
+                <i class="bi bi-pencil-square me-1"></i> Matérias
+              </button>
+              <button class="btn btn-sm btn-primary fw-bold shadow-sm" id="btnBatchAi" onclick="iniciarRefinamentoLoteIA()">
+                <i class="bi bi-stars me-1"></i> Auditar Todas (IA)
               </button>
               <button class="btn btn-sm btn-success fw-bold px-4 shadow py-2" onclick="exportarJson()">
-                <i class="bi bi-download me-1"></i> Baixar Arquivo JSON
+                <i class="bi bi-download me-1"></i> Baixar JSON
               </button>
             </div>
           </div>
@@ -257,18 +303,45 @@
               <span class="text-muted fw-semibold font-monospace small" id="lblSelectedIdOrigem">PMBA_2025_Q01</span>
             </div>
             <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-info fw-semibold" id="btnRefinarQuestaoIA" onclick="refinarQuestaoAtualIA()">
+                <i class="bi bi-magic me-1"></i> Tratar / Validar com IA
+              </button>
               <button class="btn btn-sm btn-outline-danger" onclick="excluirQuestaoAtual()">
-                <i class="bi bi-trash-fill me-1"></i> Excluir Questão
+                <i class="bi bi-trash-fill me-1"></i> Excluir
               </button>
             </div>
           </div>
           <div class="card-body p-4">
+
+            <!-- Painel de Auditoria & Integridade Estrutural (Gemini) -->
+            <div id="aiAuditCard" class="card ai-card rounded-3 p-3 mb-3 d-none">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge ai-badge"><i class="bi bi-shield-check"></i> Auditoria de IA</span>
+                  <span id="badgeAiStatus" class="badge">Aprovado</span>
+                  <span class="text-muted small font-monospace" id="lblAiConfianca">Confiança: 100%</span>
+                </div>
+                <span class="text-muted small font-monospace" id="lblAiModel">Gemini</span>
+              </div>
+              <div class="small mt-1">
+                <div class="d-flex align-items-center gap-1 flex-wrap mb-1">
+                  <span class="text-muted">Melhorias:</span>
+                  <div id="containerAiMelhorias" class="d-inline-flex gap-1 flex-wrap"></div>
+                </div>
+              </div>
+              <div id="containerAiAlertas" class="mt-2 small d-none">
+                <div class="alert alert-warning py-1 px-2 mb-0 d-flex align-items-center gap-1 small" id="lblAiAlertas"></div>
+              </div>
+            </div>
             
             <!-- Metadata Row (Disciplina, Gabarito) -->
             <div class="row g-3 mb-3">
               <div class="col-md-8">
-                <label class="form-label fw-semibold small">Matéria / Disciplina</label>
-                <input type="text" class="form-control form-control-sm" id="editMateria" onchange="salvarEdicaoAtual()">
+                <label class="form-label fw-semibold small d-flex justify-content-between align-items-center">
+                  <span>Matéria / Disciplina</span>
+                  <span class="text-muted small">Deixe vazio para <code>[IA Automática (null)]</code></span>
+                </label>
+                <input type="text" class="form-control form-control-sm" id="editMateria" list="canonicalSubjectsList" placeholder="Selecione ou deixe em branco para IA da plataforma" onchange="salvarEdicaoAtual()">
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-semibold small">Gabarito Oficial</label>
@@ -276,13 +349,43 @@
               </div>
             </div>
 
+            <!-- Texto de Apoio / Base Compartilhado (textoBase) -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold small d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-earmark-text text-info me-1"></i> Texto de Apoio / Contexto Base (<code>textoBase</code>)</span>
+                <span class="text-muted small">Compartilhado entre questões (opcional)</span>
+              </label>
+              <textarea class="form-control font-monospace" id="editTextoBase" rows="3" placeholder="Crônica, poema, artigo de lei ou texto base..." oninput="salvarEdicaoAtual()"></textarea>
+            </div>
+
+            <!-- Imagem / Figura da Questão -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold small d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-image text-primary me-1"></i> Imagem / Figura da Questão (opcional)</span>
+                <span class="text-muted small">Cole com <kbd>Ctrl+V</kbd> ou clique para selecionar</span>
+              </label>
+              
+              <div id="containerImagemPreview" class="border rounded-3 p-3 text-center bg-body-secondary position-relative d-none mb-2">
+                <img id="imgQuestaoPreview" src="" alt="Imagem da questão" style="max-height: 220px; max-width: 100%; object-fit: contain; border-radius: 8px;">
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle" onclick="removerImagemQuestao()" title="Remover imagem">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+
+              <div id="dropZoneImagem" class="border border-2 border-dashed rounded-3 p-3 text-center cursor-pointer bg-body-tertiary" onclick="document.getElementById('fileUploadImagem').click()">
+                <i class="bi bi-card-image text-primary fs-3 d-block mb-1"></i>
+                <span class="small fw-semibold">Clique para anexar imagem da questão ou pressione <kbd>Ctrl+V</kbd></span>
+                <input type="file" id="fileUploadImagem" accept="image/*" class="d-none" onchange="handleImagemUpload(this.files[0])">
+              </div>
+            </div>
+
             <!-- Enunciado Textarea -->
             <div class="mb-4">
               <label class="form-label fw-semibold small d-flex justify-content-between">
-                <span>Texto da Questão (Enunciado / Contexto)</span>
+                <span>Comando da Questão (Enunciado Central)</span>
                 <span class="text-muted small">Edição visual em tempo real</span>
               </label>
-              <textarea class="form-control font-monospace" id="editEnunciado" rows="7" oninput="salvarEdicaoAtual()"></textarea>
+              <textarea class="form-control font-monospace" id="editEnunciado" rows="6" oninput="salvarEdicaoAtual()"></textarea>
             </div>
 
             <!-- Alternativas Interactive List -->
@@ -313,12 +416,49 @@
 
   </div>
 
+  <!-- Modal Texto de Apoio em Lote -->
+  <div class="modal fade" id="textoApoioModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content rounded-4 border shadow">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-text text-primary me-2"></i>Vincular Texto de Apoio a Múltiplas Questões</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="alert alert-info border-0 rounded-3 small mb-3">
+            <i class="bi bi-info-circle-fill me-1"></i> Cole o texto base compartilhado da prova (ex: texto de interpretação para questões 1 a 4). Ele será inserido automaticamente no início do enunciado de todas as questões do intervalo.
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Da Questão Nº</label>
+              <input type="number" class="form-control" id="textoApoioStartQ" value="1" min="1">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Até a Questão Nº</label>
+              <input type="number" class="form-control" id="textoApoioEndQ" value="4" min="1">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Texto de Apoio / Base Compartilhado</label>
+            <textarea class="form-control font-monospace" id="txtTextoApoioConteudo" rows="7" placeholder="Cole o texto de apoio da prova aqui..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary fw-bold px-4" onclick="aplicarTextoApoioLote()">Vincular Texto às Questões</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Ações em Lote (Matérias) -->
   <div class="modal fade" id="batchModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content rounded-4 border">
         <div class="modal-header border-bottom">
-          <h5 class="modal-title fw-bold"><i class="bi bi-magic me-2 text-warning"></i>Definir Matérias em Lote</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-warning"></i>Definir Matérias em Lote</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
@@ -333,8 +473,16 @@
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Nome da Matéria / Disciplina</label>
-            <input type="text" class="form-control" id="batchMateriaNome" placeholder="Ex: Língua Portuguesa, Noções de Direito, etc.">
+            <label class="form-label fw-semibold d-flex justify-content-between">
+              <span>Nome da Matéria / Disciplina</span>
+              <span class="text-muted small">Grade Canônica Oficial</span>
+            </label>
+            <input type="text" class="form-control" id="batchMateriaNome" list="canonicalSubjectsList" placeholder="Selecione a matéria ou deixe vazio para IA">
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="document.getElementById('batchMateriaNome').value = '[IA Automática (null)]'">
+              <i class="bi bi-magic me-1"></i> Preencher "[IA Automática (null)]"
+            </button>
           </div>
         </div>
         <div class="modal-footer border-top">
@@ -345,8 +493,179 @@
     </div>
   </div>
 
+  <!-- Datalist Oficial de Matérias Canônicas Trajetória -->
+  <datalist id="canonicalSubjectsList">
+    <option value="[IA Automática (null)]">Deixar nulo para classificação global pela IA do backend</option>
+    <option value="Língua Portuguesa">Língua Portuguesa (Gramática / Interpretação / Literatura)</option>
+    <option value="Inglês">Inglês (Língua Inglesa)</option>
+    <option value="Espanhol">Espanhol (Língua Espanhola)</option>
+    <option value="Matemática">Matemática / Raciocínio Lógico</option>
+    <option value="História">História (Geral / Brasil / Bahia)</option>
+    <option value="Geografia">Geografia (Geral / Brasil / Bahia)</option>
+    <option value="Física">Física</option>
+    <option value="Química">Química</option>
+    <option value="Biologia">Biologia</option>
+    <option value="Filosofia">Filosofia</option>
+    <option value="Sociologia">Sociologia</option>
+    <option value="Direito Constitucional">Direito Constitucional / Direitos Humanos</option>
+    <option value="Direito Administrativo">Direito Administrativo</option>
+    <option value="Direito Penal">Direito Penal / Penal Militar</option>
+    <option value="Direito Processual Penal">Direito Processual Penal</option>
+    <option value="Legislação Institucional">Legislação Institucional (PMBA / Igualdade Racial)</option>
+    <option value="Informática">Informática / TI</option>
+  </datalist>
+
+  <!-- Modal Configuração da IA (Google Gemini) -->
+  <div class="modal fade" id="aiSettingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content rounded-4 border shadow">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+            <i class="bi bi-stars text-warning"></i> Configurações da IA (Google Gemini)
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="alert alert-info border-0 rounded-3 small mb-3">
+            <i class="bi bi-info-circle-fill me-1"></i> A IA utiliza pipeline com cascata automática de modelos (<code>gemini-3.1-flash-lite</code>, <code>gemini-3.5-flash</code>, <code>gemini-3.7-flash</code>, <code>gemini-flash-latest</code>), retries exponenciais e saída estruturada JSON.
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Chave de API do Gemini (Google AI Studio)</label>
+            <div class="input-group">
+              <input type="password" class="form-control font-monospace" id="inputGeminiApiKey" placeholder="Configurado via Vertex AI ou Cole sua Chave">
+              <button class="btn btn-outline-secondary" type="button" onclick="toggleApiKeyVisibility()">
+                <i class="bi bi-eye" id="iconShowKey"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="aiTestResult" class="d-none alert py-2 px-3 small rounded-3 mb-0"></div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-outline-info" onclick="testarConexaoGemini()">
+            <i class="bi bi-plug-fill me-1"></i> Testar Conexão
+          </button>
+          <button type="button" class="btn btn-primary px-4 fw-semibold" data-bs-dismiss="modal" onclick="salvarConfiguracaoIA()">
+            Salvar e Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Progresso IA em Lote -->
+  <div class="modal fade" id="aiProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border shadow text-center p-4">
+        <div class="mb-3">
+          <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+        </div>
+        <h5 class="fw-bold mb-2">Auditando e Refinando com Google Gemini</h5>
+        <p class="text-muted small mb-3" id="aiProgressStatusText">Enviando questões em paralelo (concorrência controlada)...</p>
+        
+        <div class="progress mb-2" style="height: 10px;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="aiProgressBar" role="progressbar" style="width: 100%;"></div>
+        </div>
+        <div class="small text-muted font-monospace" id="aiProgressCounter">Aguarde a resposta dos modelos...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Esteira Automática (Piloto Automático de Pastas) -->
+  <div class="modal fade" id="esteiraModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content rounded-4 border shadow-lg">
+        <div class="modal-header border-bottom py-3 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <div class="p-2 rounded-3 bg-warning-subtle text-warning">
+              <i class="bi bi-robot fs-4"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold mb-0">Esteira de Processamento Contínuo (Piloto Automático)</h5>
+              <p class="text-muted small mb-0">Extração contínua de múltiplos cadernos em segundo plano</p>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge rounded-pill bg-secondary" id="esteiraStatusBadge">⚪ Parada</span>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+        </div>
+        <div class="modal-body p-4">
+          
+          <!-- Configuração da Pasta -->
+          <div class="card border rounded-3 p-3 mb-3 bg-body-tertiary">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-8">
+                <label class="form-label fw-bold small d-flex justify-content-between">
+                  <span>Pasta Monitorada (onde estão os PDFs das provas):</span>
+                  <span class="text-muted small">Suporta Provas e Gabaritos em PDF</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-body border-end-0"><i class="bi bi-folder-fill text-warning"></i></span>
+                  <input type="text" class="form-control border-start-0 font-monospace" id="inputEsteiraFolder" value="C:\Users\jao_v\Desktop\ProvasParser" placeholder="Caminho da pasta com os PDFs...">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-success fw-bold w-100 py-2 shadow-sm d-flex align-items-center justify-content-center gap-2" id="btnToggleEsteira" onclick="toggleEsteira()">
+                    <i class="bi bi-play-circle-fill fs-5" id="iconBtnEsteira"></i>
+                    <span id="lblBtnEsteira">Ligar Esteira</span>
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary py-2" onclick="abrirPastaSaida()" title="Abrir pasta de saída com os JSONs gerados">
+                    <i class="bi bi-folder2-open"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Métricas em Tempo Real -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <div class="card border rounded-3 p-3 text-center bg-body-secondary h-100">
+                <div class="text-muted small fw-semibold mb-1">PROVAS PROCESSADAS</div>
+                <div class="fs-2 fw-bold text-primary font-monospace" id="metricProvasProcessadas">0</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border rounded-3 p-3 text-center bg-body-secondary h-100">
+                <div class="text-muted small fw-semibold mb-1">QUESTÕES ESTRUTURADAS</div>
+                <div class="fs-2 fw-bold text-success font-monospace" id="metricQuestoesExtraidas">0</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border rounded-3 p-3 text-center bg-body-secondary h-100">
+                <div class="text-muted small fw-semibold mb-1">ERROS / FALHAS</div>
+                <div class="fs-2 fw-bold text-danger font-monospace" id="metricErros">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terminal de Logs em Tempo Real -->
+          <div class="mb-0">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold small text-muted"><i class="bi bi-terminal-fill me-1"></i> Console de Execução em Tempo Real</span>
+              <span class="small text-muted font-monospace" id="lblEsteiraActiveFile">Aguardando início...</span>
+            </div>
+            <div class="bg-dark text-light font-monospace p-3 rounded-3 border" style="height: 240px; overflow-y: auto; font-size: 0.82rem; line-height: 1.5;" id="esteiraConsoleLogs">
+              <div class="text-secondary">[00:00:00] Pronto para iniciar. Clique em 'Ligar Esteira' para processar a pasta automaticamente.</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer border-top d-flex justify-content-between">
+          <div class="small text-muted">
+            <i class="bi bi-shield-check text-success me-1"></i> Pacing automático ativo para proteção da API Gratuita (15 RPM).
+          </div>
+          <button type="button" class="btn btn-secondary px-4 fw-semibold" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/static/js/studio.js"></script>
+  <script src="/static/js/studio.js?v=2.2"></script>
 </body>
 </html>

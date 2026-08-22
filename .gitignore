@@ -8,6 +8,17 @@ build/
 # Datasets and generated output
 microdados_enem_2025/
 output/
+payloadepdf/
+JSONPARAANALISE
+*.pdf
+*.log
+
+# Environment variables & secrets
+.env
+.env.local
+*-overview-*.json
+*-credentials*.json
+service_account*.json
 
 # IDE / OS files
 .idea/
@@ -15,7 +26,10 @@ output/
 *.swp
 *.tmp
 .DS_Store
+debug_http_resp.html
 
 # Virtual environments / Python cache
 __pycache__/
 *.pyc
+.venv/
+venv/
